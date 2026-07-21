@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Serif, Mona_Sans} from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
+import { Toaster } from "@/components/ui/sonner"
 
 const ibmPlexSerif = IBM_Plex_Serif({
   variable: "--font-ibm-plex-serif",
@@ -29,16 +30,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${ibmPlexSerif.variable} ${monaSans.variable} relative font-sans antialiased`}
-    >
+      <ClerkProvider appearance={{ theme: shadcn }} afterSignOutUrl="/sign-in">
+    <html lang="en"
+      className={`${ibmPlexSerif.variable} ${monaSans.variable} relative font-sans antialiased`}>
       <body className="min-h-full flex flex-col">
-        <ClerkProvider appearance={{ theme: shadcn }}>
           <NavBar />
           {children}
-        </ClerkProvider>
+       <Toaster />
       </body>
     </html>
+   </ClerkProvider>
   );
 }

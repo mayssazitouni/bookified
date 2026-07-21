@@ -15,19 +15,20 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-
-type UploadFormValues = {
-  pdfFile: File;
-  coverImage?: File;
-  title: string;
-  author: string;
-  voice: string;
-};
+import {useAuth} from "@clerk/nextjs";
+import { toast } from 'sonner';
+import {useRouter} from "next/navigation";
+import {checkBookExists, createBook, saveBookSegments} from "@/lib/actions/book.actions";
+import {parsePDFFile} from "@/lib/utils";
+import {upload} from "@vercel/blob/client";
+import { UploadFormValues } from '@/lib/zod';
 
 const UploadForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const {userId } = useAuth();
+  const router = useRouter();
 
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(UploadSchema),
@@ -36,7 +37,8 @@ const UploadForm = () => {
       coverImage: undefined as any,
       title: '',
       author: '',
-      voice: 'rachel',
+      voice: '',
+
     },
   });
 
@@ -67,13 +69,99 @@ const UploadForm = () => {
   };
 
   const onSubmit = async (data: UploadFormValues) => {
+     if(!userId){
+      return  toast.error("Please sign in to upload a book")
+     }
     setIsSubmitting(true);
-    // TODO: Implement form submission logic
-    console.log('Form submitted:', data);
-    setTimeout(() => {
+
+     // posthog -> track book uploads...
+
+    try {
+      const existsCheck = await checkBookExists(data.title);
+      if (existsCheck.exists && existsCheck.book) {
+        toast.info("Book with same title already exists.");
+        form.reset()
+        router.push(`/book/${existsCheck.book.slug}`)
+        return;
+      }
+
+      const fileTitle = data.title.replace(/\s+/g, '-').toLowerCase();
+      const pdfFile = data.pdfFile;
+
+      const parsedPdf = await parsePDFFile(pdfFile);
+
+      if(parsedPdf.content.length === 0){
+        toast.error("Failed to parse PDF. Please try again with a different file.");
+        return;
+      }
+
+      const uploadedPdfBlob = await upload(fileTitle, pdfFile, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        contentType: 'application/pdf'
+      });
+
+      let coverUrl: string;
+
+      if(data.coverImage) {
+        const uploadCoverBlob = await upload(`${fileTitle}_cover.png`, data.coverImage, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+          contentType: data.coverImage.type,
+        });
+        coverUrl = uploadCoverBlob.url;
+      } else {
+        const response = await fetch(parsedPdf.cover)
+        const blob = await response.blob();
+
+        const uploadedCoverBlob = await upload(`${fileTitle}_cover.png`, blob, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+          contentType: 'image/png'
+        });
+        coverUrl = uploadedCoverBlob.url;
+
+      }
+
+      const book = await createBook({
+            clerkId: userId,
+            title: data.title,
+            author: data.author,
+            voice: data.voice,
+            fileURL: uploadedPdfBlob.url,
+            fileBlobKey: uploadedPdfBlob.pathname,
+            coverURL:coverUrl,
+            fileSize: pdfFile.size
+          });
+
+      if(!book.success) throw new Error("Failed to create book");
+
+      if(book.alreadyExists) {
+              toast.info("Book with same title already exists.");
+              form.reset()
+              router.push(`/book/${existsCheck.book.slug}`)
+              return;
+          }
+
+      const segments = await saveBookSegments(book.data._id, userId, parsedPdf.content);
+
+      if(!segments.success) {
+          toast.error("Failed to save book segments.");
+          throw new Error("Failed to save book segments");
+      }
+
+
+       form.reset();
+      router.push('/');
+    }catch (error) {
+      console.error(error);
+
+      toast.error("Failed to check for existing book.");
+    } finally {
       setIsSubmitting(false);
-    }, 3000);
+    }
   };
+
 
   return (
     <>
