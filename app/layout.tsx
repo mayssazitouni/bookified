@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <ClerkProvider appearance={{ theme: shadcn }} afterSignOutUrl="/sign-in">
+        <ClerkProvider appearance={{ theme: shadcn }}>
     <html lang="en"
       className={`${ibmPlexSerif.variable} ${monaSans.variable} relative font-sans antialiased`}>
       <body className="min-h-full flex flex-col">
