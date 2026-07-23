@@ -18,6 +18,7 @@ export async function POST(request: Request): Promise<NextResponse> {
                 throw new Error('Unauthorized: User not authenticated');
                 }
 
+
                 return {
                 allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/webp', 'image/png'],
                 addRandomSuffix: true,
@@ -38,6 +39,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     } catch (e) {
         const message = e instanceof Error ? e.message : "An unknown error occurred";
         const status = message.includes('Unauthorized') ? 401 : 500;
+        console.error('upload error', e);
+        const clientMessage = status === 401 ? 'Unauthorized' : 'Upload failed';
         return NextResponse.json({error: message}, {status});
     }
  }
