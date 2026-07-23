@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 
 const Hero = () => {
   return (
-    <div className="wrapper pt-24 pb-12 mb-10 md:mb-16">
+    <div className="wrapper  pb-12 mb-10 md:mb-16">
       <div className="library-hero-card">
         <div className="library-hero-content">
           {/* Left Section */}
