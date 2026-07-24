@@ -16,6 +16,7 @@ export interface IBook extends Document {
     slug: string;
     author: string;
     voice?: string;
+    persona?: string;
     fileURL: string;
     fileBlobKey: string;
     coverURL: string;
@@ -115,4 +116,12 @@ export interface FileUploadFieldProps<T extends FieldValues> {
     icon: LucideIcon;
     placeholder: string;
     hint: string;
+}
+
+export interface StartSessionResult {
+    success: boolean;
+    sessionId?: string;
+    session?: IVoiceSession | null;
+    error?: string;
+    message?: string;
 }
