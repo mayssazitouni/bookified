@@ -644,11 +644,14 @@
      BOOK CARD COMPONENT
      =========================================== */
   .book-card {
-    @apply flex flex-col transition-all duration-200 h-full border-0;
+    @apply flex flex-col transition-all duration-200 h-full border-0 cursor-pointer;
 
     &:hover {
       transform: translateY(-4px);
     }
+  }
+  .book-card-figure {
+    @apply m-0 p-0;
   }
   .book-card-3d {
     @apply relative w-full transition-transform duration-200;

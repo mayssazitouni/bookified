@@ -5,11 +5,18 @@ import Image from "next/image";
 const BookCard = ({ title, author, coverURL, slug }: BookCardProps) => {
 
     return (
-        <Link href={`/books/${slug}`}>
+        <Link href={`/books/${slug}`} className="block cursor-pointer">
             <article className="book-card">
                 <figure className="book-card-figure">
                     <div className="book-card-cover-wrapper">
-                        <Image src={coverURL} alt={title} width={133} height={200} className="book-card-cover" />
+                        <Image
+                            src={coverURL || '/assets/book-cover.svg'}
+                            alt={title}
+                            width={133}
+                            height={200}
+                            className="book-card-cover"
+                            unoptimized
+                        />
                     </div>
                 </figure>
 
@@ -19,6 +26,7 @@ const BookCard = ({ title, author, coverURL, slug }: BookCardProps) => {
                 </figcaption>
             </article>
         </Link>
-    )
-}
-export default BookCard
+    );
+};
+
+export default BookCard;
