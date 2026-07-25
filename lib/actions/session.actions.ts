@@ -2,25 +2,31 @@
 import {StartSessionResult} from "@/types";
 import {connectToDatabase} from "@/database/mongoose";
 import VoiceSession from "@/database/models/voice-session.model";
-import {getCurrentBillingPeriodStart} from "@/lib/subscription-constants";
-
-
+import {auth} from "@clerk/nextjs/server";
 
 export const startVoiceSession = async (clerkId: string, bookId: string): Promise<StartSessionResult> => {
     try {
         await connectToDatabase();
-        //Limits/Plan to see whether a session is allowed
+
+        const { userId } = await auth();
+
+        if (!userId || userId !== clerkId) {
+            return {
+                success: false,
+                message: 'Unauthorized'
+            };
+        }
+
         const session = await VoiceSession.create({
             clerkId,
             bookId,
             startedAt: new Date(),
-            billingPeriodStart: getCurrentBillingPeriodStart(),
             durationSeconds: 0,
         });
+
         return {
             success: true,
             sessionId: session._id.toString(),
-            // maxDurationMinutes: check.maxDurationMinutes,
         }
     } catch (e) {
         console.error('Error starting voice session', e);
@@ -28,7 +34,8 @@ export const startVoiceSession = async (clerkId: string, bookId: string): Promis
             success: false,
             message: 'Failed to start voice session. Please try again later.'
         }
-    }}
+    }
+}
 
 export const endVoiceSession = async (
     sessionId: string,

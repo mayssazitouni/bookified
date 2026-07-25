@@ -14,12 +14,14 @@ const Hero = () => {
             <p className="library-hero-description">
               Convert your books into interactive AI conversations. Listen, learn, and discuss your favorite reads.
             </p>
-            <Link href="/books/new">
-              <button className="library-cta-primary">
-                <Plus className="w-5 h-5" />
-                Add new book
-              </button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/books/new">
+                <button className="library-cta-primary">
+                  <Plus className="w-5 h-5" />
+                  Add new book
+                </button>
+              </Link>
+            </div>
           </div>
 
           {/* Center Section - Illustration */}

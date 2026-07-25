@@ -6,8 +6,8 @@ import {escapeRegex, generateSlug, serializeData} from "@/lib/utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
 import mongoose from "mongoose";
-import {getUserPlan} from "@/lib/subscription.server";
 import {revalidatePath} from "next/cache";
+import {redirect} from "next/navigation";
 
 export const getAllBooks = async (search?: string) => {
     try {
@@ -82,51 +82,17 @@ export const createBook = async (data: CreateBook) => {
             }
         }
 
-        // Todo: Check subscription limits before creating a book
-        const { getUserPlan } = await import("@/lib/subscription.server");
-        const { PLAN_LIMITS } = await import("@/lib/subscription-constants");
 
-        const { auth } = await import("@clerk/nextjs/server");
-        const { userId } = await auth();
-
-        if (!userId || userId !== data.clerkId) {
-            return { success: false, error: "Unauthorized" };
-        }
-
-
-        const plan = await getUserPlan();
-
-        // Extract the planName string property ("PRO" or "FREE")
-        const planKey = (plan?.planName?.toUpperCase() || "FREE") as keyof typeof PLAN_LIMITS;
-        const limits = PLAN_LIMITS[planKey];
-
-        const bookCount = await Book.countDocuments({ clerkId: userId });
-
-        if (bookCount >= limits.maxBooks) {
-            const { revalidatePath } = await import("next/cache");
-            revalidatePath("/");
-
-            return {
-                success: false,
-                error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
-                isBillingError: true,
-            };
-        }
-
-        const book = await Book.create({...data, clerkId: userId, slug, totalSegments: 0});
+        const book = await Book.create({...data, clerkId: data.clerkId, slug, totalSegments: 0});
 
         revalidatePath('/');
         return {
             success: true,
             data: serializeData(book),
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error('Error creating a book', e);
-
-        return {
-            success: false,
-            error: e,
-        }
+        return { success: false, error: e.message };
     }
 }
 
