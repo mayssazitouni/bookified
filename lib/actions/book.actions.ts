@@ -92,8 +92,12 @@ export const createBook = async (data: CreateBook) => {
             return { success: false, error: "Unauthorized" };
         }
 
+
         const plan = await getUserPlan();
-        const limits = PLAN_LIMITS[plan];
+
+        // Extract the planName string property ("PRO" or "FREE")
+        const planKey = (plan?.planName?.toUpperCase() || "FREE") as keyof typeof PLAN_LIMITS;
+        const limits = PLAN_LIMITS[planKey];
 
         const bookCount = await Book.countDocuments({ clerkId: userId });
 

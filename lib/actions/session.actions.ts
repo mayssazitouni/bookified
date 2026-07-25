@@ -30,22 +30,24 @@ export const startVoiceSession = async (clerkId: string, bookId: string): Promis
         }
     }}
 
-export const endVoiceSession = async (sessionId: string, durationSeconds: number): Promise<{ success: boolean }> => {
+export const endVoiceSession = async (
+    sessionId: string,
+    durationSeconds: number
+): Promise<{ success: boolean; error?: string }> => {
     try {
         await connectToDatabase();
 
-       const result =  await VoiceSession.findByIdAndUpdate(sessionId, {
+        const result = await VoiceSession.findByIdAndUpdate(sessionId, {
             endedAt: new Date(),
             durationSeconds,
         });
 
-       if (!result) return { success: false, error: 'voice session not found.' }
-
+        if (!result) return { success: false, error: 'voice session not found.' };
 
         return { success: true };
     } catch (e) {
         console.error('Error ending voice session', e);
-        return { success: false, error: 'Failed to end voice session. Please try again later.'};
+        return { success: false, error: 'Failed to end voice session. Please try again later.' };
     }
 }
 
